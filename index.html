@@ -163,6 +163,21 @@ body.slowmo .bsvg{filter:saturate(.7) brightness(1.1) drop-shadow(0 0 16px rgba(
 .stp{background:none;border:0;border-radius:0;border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:none}
 .stp:last-child{border-bottom:0}
 .big.go{min-width:15rem;padding:1.2rem 2.4rem;font-size:1.35rem;box-shadow:0 12px 40px rgba(255,106,85,.35)}
+.big.go{background:var(--ink);color:var(--bg);animation:none;box-shadow:none;min-width:11rem;padding:.95rem 2.2rem;font-size:1.05rem;font-weight:700;letter-spacing:.02em}
+.menu .ghost{background:none;border:0;box-shadow:none;color:var(--muted);font-size:.95rem;padding:.3rem .8rem}
+.wopt{display:flex;gap:.4rem;margin-top:.4rem}
+.wopt button{padding:.65rem .8rem;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:transparent;font-size:.95rem}
+.wopt button:first-child{flex:1;text-align:left}
+.wopt.on button:first-child{background:var(--p1);color:var(--bg);font-weight:800}
+.skip{display:none;position:absolute;right:.9rem;bottom:.9rem;z-index:7;padding:.6rem 1.1rem;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:var(--muted);font-size:.85rem;overflow:hidden;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.panel.canskip .skip{display:block}
+.skip.on{background:var(--ink);color:var(--bg);font-weight:700}
+.skip.ask{color:var(--ink);animation:skp 1s ease-in-out infinite}
+@keyframes skp{50%{box-shadow:0 0 0 7px rgba(255,255,255,.16)}}
+.overlay button,.sheet button{position:relative;overflow:hidden;transition:transform .12s,background .2s}
+.overlay button:active,.sheet button:active{transform:scale(.95)}
+.rip{position:absolute;border-radius:50%;background:currentColor;opacity:.28;transform:scale(0);animation:rip .6s ease-out forwards;pointer-events:none}
+@keyframes rip{to{transform:scale(1);opacity:0}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -198,6 +213,7 @@ body.slowmo .bsvg{filter:saturate(.7) brightness(1.1) drop-shadow(0 0 16px rgba(
     <div class="row"><span>Face-to-face mode<small>Flips the top player’s side</small></span><input class="sw" type="checkbox" data-key="face"></div>
     <div class="row"><span>Panic effects<small>Shaking and red flashing near the end</small></span><input class="sw" type="checkbox" data-key="panic"></div>
     <div class="row"><span>Sound</span><input class="sw" type="checkbox" data-key="sound"></div>
+    <div class="row" style="flex-direction:column;align-items:stretch"><span>Win sound<small>Put win.mp3 next to index.html. Tap a name to pick it, ▶ to preview</small></span><div id="wins"></div></div>
     <div class="row"><span>Vibration<small>Android only</small></span><input class="sw" type="checkbox" data-key="vibrate"></div>
     <div class="row"><span>Keep screen awake</span><input class="sw" type="checkbox" data-key="wake"></div>
     <div class="row"><span>Player 1 name</span><input type="text" maxlength="14" data-key="n0"></div>
@@ -208,7 +224,7 @@ body.slowmo .bsvg{filter:saturate(.7) brightness(1.1) drop-shadow(0 0 16px rgba(
 </div>
 
 <script>
-const DEF={time:10,hp:2,countUp:false,decAt:3,face:true,panic:true,sound:true,vibrate:true,wake:true,n0:'Player 1',n1:'Player 2'};
+const DEF={time:10,hp:2,countUp:false,decAt:3,face:true,panic:true,sound:true,winSnd:'f1',vibrate:true,wake:true,n0:'Player 1',n1:'Player 2'};
 let S=load();
 function load(){try{return{...DEF,...JSON.parse(localStorage.getItem('krillion-irl')||'{}')}}catch(e){return{...DEF}}}
 function save(){try{localStorage.setItem('krillion-irl',JSON.stringify(S))}catch(e){}}
@@ -218,8 +234,6 @@ const ov=$('#overlay'),sheet=$('#settings'),app=$('#app'),vig=$('#vig');
 const G={state:'idle',turn:0,hp:[2,2],left:0,deadline:0,round:0,raf:0,lastTap:0,nextTick:0,wake:null,cat:'',starter:0,rt:0,nt:0,steal:false,vt:0,rate:1,lastF:0,slowT0:0,askReady:0,resumeTo:null};
 
 const CATS=`Pizza toppings
-Types of pasta
-Types of cheese
 Fast food chains
 Breakfast cereal brands
 Chocolate candy bars
@@ -232,10 +246,8 @@ Spices (not salt or pepper)
 Green vegetables
 Ice cream flavors
 Pancake toppings
-Types of bread
 Citrus fruits
 Berries
-Types of nuts
 Herbs
 Coffee drinks
 Breakfast foods
@@ -274,7 +286,6 @@ Harry Potter characters (not Harry, Ron or Hermione)
 Reality TV shows
 Video game consoles
 Nintendo characters
-Electric or water Pokémon
 Boy bands
 Streaming services
 Songs with a color in the title
@@ -290,7 +301,6 @@ Golf terms
 Famous quarterbacks
 Positions in football
 Positions in baseball
-Types of tools
 Camping gear
 Parts of a bicycle
 Parts of a guitar
@@ -299,12 +309,8 @@ Parts of a ship
 Things in a first aid kit
 Carnival rides and games
 Makeup products
-Things in a bathroom
 Things on a school supply list
-Types of shoes
-Types of hats
 Hairstyles
-Types of fabric
 Things you wear in pairs
 Words that rhyme with “night”
 Words that rhyme with “cake”
@@ -330,10 +336,6 @@ Elements on the periodic table
 Things in our solar system
 Bones in the human body
 Gemstones
-Types of weather
-Types of clouds
-Types of rocks
-Types of dances
 Instruments in an orchestra
 Instruments with strings
 Music genres
@@ -343,11 +345,776 @@ Famous authors
 Famous scientists
 U.S. presidents
 Flowers
-Types of trees
 Christmas songs
-Halloween candy`.split('\n');
+Halloween candy
+Hot sauce or condiment brands
+Salad ingredients
+Vegetables that grow underground
+Red fruits
+Tropical fruits
+Stone fruits
+Breakfast pastries
+Donut flavors
+Milkshake flavors
+Smoothie ingredients
+Things you put on a hot dog
+Things you put on a baked potato
+Thanksgiving foods
+Things at a barbecue
+Salad dressings
+Kitchen appliances
+Kitchen utensils
+Things in a spice rack
+Things in a fridge
+Things in a pantry
+Cocktail ingredients
+Coffee shop chains
+Ice cream shop chains
+Mexican restaurant chains
+Fast food burger chains
+Chicken restaurant chains
+Countries in Asia
+Countries in North America and Central America
+Countries that start with “S”
+Countries that start with “B”
+Countries with a desert
+Landlocked countries
+Capital cities in Europe
+Capital cities in Asia
+Capital cities in Africa
+U.S. states that start with “N”
+U.S. states that start with “A”
+U.S. states that border Canada
+U.S. states that border an ocean
+States that start with “W”
+Cities in Texas
+Cities in California
+Cities in Florida
+Cities in New York State
+Cities in Oklahoma
+Famous skyscrapers
+Famous bridges
+Famous museums
+Famous deserts
+Famous lakes
+Oceans and seas
+Famous waterfalls
+Famous volcanoes
+Famous castles
+Famous landmarks in Paris
+Famous landmarks in London
+Famous landmarks in New York City
+Theme parks
+Ski resorts or winter sports
+Beaches
+Caribbean islands
+Hawaiian islands or cities
+Mountain ranges
+Currencies of the world
+Languages spoken in Europe
+Languages spoken in Asia
+Things in an airport
+Road signs
+Things on a highway
+Car makes from Japan
+Car makes from Germany
+American car brands
+Motorcycle brands
+Trucks and SUVs
+Animals in Africa
+Animals in the rainforest
+Animals in the ocean
+Animals in the desert
+Animals in North America
+Animals in Asia
+Animals with a pouch
+Animals with wings
+Animals that can fly
+Animals with antlers or horns
+Animals that live in trees
+Animals that are nocturnal
+Animals that are endangered
+Animals with a shell
+Animals that swim
+Animals with long necks or tails
+Animal sounds
+Animal group names
+Zoo animals
+Pet animals
+Bird species
+Fish species
+Prehistoric creatures
+Mythical creatures
+Greek gods
+Roman gods
+Norse gods
+Egyptian gods
+Greek heroes and monsters
+Fairy tale characters
+Nursery rhyme characters
+Cartoon characters
+Cartoon dogs
+Cartoon cats
+Cartoon ducks
+Superheroes
+DC characters
+Marvel villains
+Star Wars characters
+Star Wars planets and ships
+Lord of the Rings characters
+Game of Thrones houses or characters
+Disney princesses
+Disney sidekicks
+Disney songs
+Disney characters with animal friends
+Dreamworks movies
+Animated movies
+Horror movies
+Action movies
+Comedy movies
+Romantic comedies
+Sci-fi movies
+Movies with sequels
+Movies about animals
+Movies about school
+Movies that start with “The”
+Famous actors
+Famous actresses
+Famous directors
+Famous comedians
+Famous movie villains
+Famous TV dads
+Famous TV moms
+Famous TV families
+Sitcoms
+TV shows with doctors
+TV shows with cops
+Cartoon TV shows
+Kids TV shows
+Game shows
+Talk show hosts
+Late night hosts
+Streaming shows
+Netflix shows
+Anime
+Anime characters
+Fortnite items
+Minecraft mobs
+Minecraft items
+Mario characters
+Zelda characters
+Sonic characters
+Mario Kart items
+Video game genres
+Video game characters
+Video game consoles from Sony
+Video game companies
+Handheld game devices
+Playstation games
+Xbox games
+Roblox games
+Board game pieces
+Chess pieces
+Playing card terms
+Poker terms
+Dice games
+Pop singers
+Rock bands
+Rap artists
+Country singers
+Female pop singers
+Male pop singers
+Rappers
+Female artists
+Band names with numbers
+Band names with animals
+Songs about love
+Songs about cars
+Songs with names in the title
+Songs with a number in the title
+Songs with a place in the title
+Songs with a food in the title
+Pop songs from the 2000s
+Songs from the 1980s
+Classic rock bands
+Beatles songs
+Michael Jackson songs
+Elvis songs
+Queen songs
+Disney Channel stars
+Music festivals
+Musical instruments
+Brass instruments
+Woodwind instruments
+Percussion instruments
+Music terms
+Broadway shows
+Classical composers
+Opera or ballet terms
+Sports teams with animal names
+Soccer teams
+Soccer positions
+Premier League teams
+NHL teams
+College football teams
+College basketball teams
+Famous basketball players
+Famous soccer players
+Famous baseball players
+Famous tennis players
+Famous golfers
+Famous boxers
+Famous wrestlers
+Famous racers
+Famous Olympians
+Winter Olympic sports
+Summer Olympic sports
+Water sports
+Extreme sports
+Martial arts
+Ball sports
+Sports that use a racket
+Sports with a net
+Sports with a stick
+Positions in basketball
+Positions in hockey
+Baseball terms
+Basketball terms
+Football terms
+Soccer terms
+Tennis terms
+Swimming strokes
+Yoga poses
+Gym equipment
+Exercises
+Things in a gym bag
+Items in a baseball game
+Things at a football game
+Things at a basketball game
+Things at a stadium
+Things at a golf course
+Things at a beach
+Things at a park
+Things at a pool
+Things at a campsite
+Things at a zoo
+Things at a circus
+Things at a birthday party
+Things at a wedding
+Things at a funeral
+Things at a graduation
+Things at a concert
+Things at a farm
+Things at a grocery store
+Things at a gas station
+Things at a restaurant
+Things at a hospital
+Things at a school
+Things at a library
+Things at a bank
+Things at the post office
+Things at an airport
+Things at a hotel
+Things at a hardware store
+Things at a pet store
+Things at a toy store
+Things at a bakery
+Things at a dentist
+Things at a barbershop
+Things at a car wash
+Things at a mall
+Things in a classroom
+Things in a bedroom
+Things in a living room
+Things in a garage
+Things in a garden
+Things in a backpack
+Things in a purse
+Things in a wallet
+Things in a car
+Things in a boat
+Things in a pencil case
+Things in a medicine cabinet
+Things in a desk drawer
+Things in an office
+Things in a lunchbox
+Things in an attic
+Things in a basement
+Things in a laundry room
+Things in a closet
+Things in a refrigerator door
+School subjects
+College majors
+Jobs
+Jobs in a hospital
+Jobs in a restaurant
+Jobs at a school
+Jobs at a construction site
+Jobs that wear uniforms
+Jobs that need a license
+Jobs with a lot of travel
+Jobs with tools
+Things you wear on your head
+Things you wear in winter
+Things you wear in summer
+Things you wear to bed
+Things you wear on your wrist
+Things you wear on your hands
+Things you wear around your neck
+Clothing stores
+Sneaker brands
+Luxury brands
+Perfume brands
+Jeans brands
+Watch brands
+Phone brands
+Phone apps
+Search engines
+Web browsers
+Streaming sites
+Video call apps
+Shopping websites
+Messaging apps
+Computer parts
+Keyboard keys
+Computer brands
+Tech gadgets
+Headphone brands
+Smart home devices
+Things found on a farm
+Things found in a barn
+Things found on a pirate ship
+Things found in a castle
+Things found in a haunted house
+Things found in a circus
+Things found in an aquarium
+Things found at a carnival
+Things found in a toolbox
+Things found in a first aid kit
+Things found in a car trunk
+Planets and moons
+Stars and constellations
+Zodiac signs
+Months and holidays
+Holidays
+Holidays in December
+Holidays in the U.S.
+Days of the week
+Seasons
+Natural disasters
+Types of pasta
+Types of cheese
+Types of bread
+Types of nuts
+Types of shoes
+Types of hats
+Types of fabric
+Types of weather
+Types of clouds
+Types of rocks
+Types of dances
+Types of trees
+Types of tools
+Pasta sauces
+Italian cheeses
+Dips and spreads
+Yogurt flavors
+Cereal mascots
+Soup flavors
+Bagel toppings
+Waffle toppings
+Sundae toppings
+Cupcake flavors
+Jelly bean flavors
+Skittles or M&M flavors
+Starburst flavors
+Candy that starts with “S”
+Candy that starts with “M”
+Candy at Halloween
+Easter candy
+Christmas cookies
+Christmas movies
+Christmas decorations
+Santa’s reindeer
+Thanksgiving side dishes
+Valentine’s Day gifts
+Halloween costumes
+Halloween movies
+Things at a haunted house
+Gifts for Mother’s Day
+Things under a Christmas tree
+Winter holidays around the world
+Cities in Canada
+Provinces of Canada
+Cities in Mexico
+Cities in Italy
+Cities in France
+Cities in Spain
+Cities in Germany
+Cities in Japan
+Cities in China
+Cities in Australia
+Cities in England
+Cities in Brazil
+Cities in India
+Cities in Ohio
+Cities in Georgia
+Cities in Illinois
+Cities in Pennsylvania
+Cities in Arizona
+Cities in Colorado
+Cities in Washington State
+Cities in Louisiana
+Cities in Tennessee
+Cities in the Midwest
+U.S. state nicknames
+U.S. state birds or flowers
+Biggest U.S. cities
+Largest countries
+Smallest countries
+Largest lakes
+Highest mountains
+Largest islands
+Longest rivers
+Oldest civilizations
+Ancient wonders
+Pyramids and ancient sites
+Famous explorers
+Famous inventors
+Famous astronauts
+Famous pirates
+Famous detectives
+Famous robots
+Famous dragons
+Simpsons characters
+Family Guy characters
+SpongeBob characters
+South Park characters
+Looney Tunes characters
+Scooby-Doo characters
+Peanuts characters
+Winnie the Pooh characters
+Toy Story characters
+Frozen characters
+Lion King characters
+Aladdin characters
+Finding Nemo characters
+Shrek characters
+Minions characters
+Despicable Me characters
+Incredibles characters
+Cars characters
+Moana characters
+Encanto characters
+Spider-Man villains
+Batman villains
+Batman characters
+X-Men
+Guardians of the Galaxy characters
+Justice League members
+Teenage Mutant Ninja Turtles characters
+Power Rangers
+Transformers
+Pokémon trainers
+Dragon Ball characters
+Naruto characters
+One Piece characters
+Studio Ghibli movies
+Anime series
+Harry Potter movies
+Harry Potter teachers
+Hunger Games characters
+Twilight characters
+Percy Jackson characters
+Narnia characters
+Wizard of Oz characters
+Peter Pan characters
+Alice in Wonderland characters
+Cinderella characters
+Snow White characters
+Sleeping Beauty characters
+Beauty and the Beast characters
+Little Mermaid characters
+Mulan characters
+Pocahontas characters
+Tangled characters
+Jungle Book characters
+Mickey Mouse characters
+Winnie the Pooh friends
+Muppets
+Sesame Street characters
+Mister Rogers neighbors
+Nickelodeon shows
+Disney Channel shows
+Cartoon Network shows
+Pixar short films
+Disney animated sidekicks
+Disney animals
+Disney theme park lands
+Disney villains songs
+Marvel movies
+DC movies
+Fast and Furious characters
+James Bond actors
+James Bond villains
+Star Trek characters
+Star Wars movies
+Star Wars Jedi
+Star Wars droids
+Jurassic Park dinosaurs
+Alien or predator movies
+Zombie movies
+Horror movie villains
+Vampire movies
+Shark movies
+Spy movies
+Heist movies
+Western movies
+War movies
+Sports movies
+Dance movies
+Musicals
+Movie sequels
+Movie trilogies
+Book series
+Children’s books
+Dr. Seuss books
+Roald Dahl books
+Shel Silverstein poems
+Fairy tales
+Fables
+Nursery rhymes
+Ivy League schools
+Big Ten schools
+SEC schools
+College mascots
+Mascots of NFL teams
+Mascots of NBA teams
+Mascots of MLB teams
+NFL stadiums
+NBA arenas
+MLB stadiums
+Super Bowl halftime performers
+Heisman winners
+NBA MVPs
+NBA championship teams
+World Series winners
+Stanley Cup winners
+World Cup winners
+Olympic host cities
+Olympic mascots
+Olympic gymnasts
+Olympic swimmers
+Olympic runners
+NFL running backs
+NFL receivers
+NFL coaches
+NBA centers
+NBA point guards
+NBA coaches
+MLB pitchers
+MLB Hall of Famers
+NHL goalies
+WNBA teams
+WNBA players
+Tennis Grand Slams
+Golf majors
+Golf clubs
+Golf courses
+Skateboarding tricks
+Snowboarding tricks
+Gymnastics events
+Swimming events
+Track and field events
+Winter sports equipment
+Fishing lures
+Fish you can catch
+Parts of a boat
+Parts of a plane
+Parts of a car engine
+Parts of a house
+Parts of a castle
+Parts of a church
+Parts of a school
+Parts of a stadium
+Parts of a flower
+Parts of a tree
+Parts of a plant
+Parts of a bird
+Parts of a fish
+Parts of a horse
+Parts of a dog
+Parts of a cell
+Parts of the brain
+Parts of the ear
+Parts of the eye
+Parts of the heart
+Parts of the hand
+Parts of the foot
+Parts of the face
+Parts of the skeleton
+Organs in the body
+Muscles in the body
+Body fluids
+Facial expressions
+Hand gestures
+Dance moves
+Stretches
+Workout machines
+Vitamins
+Minerals
+Medical specialties
+Medicines
+Hospital departments
+Types of nurses
+Vet animals
+Lab equipment
+Units of length
+Units of weight
+Units of time
+Units of volume
+Metric prefixes
+Roman numerals
+Greek letters
+Hebrew letters
+Alphabet in other languages
+Text abbreviations
+Emojis
+Memes with animals
+TikTok trends
+Dances from TikTok
+Video game memes
+Fortnite skins
+Fortnite locations
+Minecraft biomes
+Minecraft blocks
+Mario Kart tracks
+Mario Kart characters
+Mario enemies
+Mario power-ups
+Smash Bros characters
+Pokémon regions
+Animal Crossing villagers
+Sims careers
+Halo characters
+Elder Scrolls races
+Final Fantasy characters
+Street Fighter characters
+Mortal Kombat characters
+Pac-Man ghosts
+Tetris pieces
+Nintendo consoles
+PlayStation consoles
+Xbox consoles
+Gaming genres
+Mattel toys
+LEGO themes
+Action figures
+Stuffed animals
+Playground equipment
+Magic tricks
+Circus acts
+Amusement park rides
+Roller coasters
+Water park rides
+Mall stores
+Mall food court restaurants
+Grocery store sections
+Store departments
+Retail chains
+Online retailers
+Delivery apps
+Rideshare apps
+Currency symbols
+Coins
+Cryptocurrencies
+Cleaning supplies
+Cleaning products
+Laundry products
+Hygiene products
+Skincare products
+Haircare products
+Perfume notes
+Tattoo designs
+Piercings
+Sports positions
+Military ranks
+Military branches
+Police ranks
+Emergency numbers
+Emergency vehicles
+Super powers
+Fantasy races
+Fantasy weapons
+Medieval weapons
+Armor pieces
+Space missions
+Space agencies
+Space probes
+Planets
+Dwarf planets
+Moons
+Constellations
+Zodiac animals
+Chinese zodiac signs
+Birthstones
+Flowers by month
+Tarot cards
+Types of magic
+Spells
+Potions
+Cryptids
+Monsters
+Horror clichés
+Fairy tale villains
+Sci-fi gadgets
+Sci-fi ships
+Computer languages
+Operating systems
+Email providers
+Cloud services
+AI assistants
+Chatbots
+Movie genres
+Movie roles
+Movie crew jobs
+TV genres
+Radio stations
+Podcast genres
+Book genres
+Poetry forms
+Art supplies
+Art movements
+Color combinations
+Fabric patterns
+Prints
+Farm equipment
+Farm crops
+Farm buildings
+Dairy products
+Meat cuts
+Fish dishes
+Egg dishes
+Frozen desserts
+Midnight snacks
+Movie snacks
+Road trip snacks
+Camping meals
+Super Bowl snacks
+Potluck dishes
+Party appetizers
+Holiday desserts
+Superfoods`.split('\n');
 let deck=[];
-function draw(){if(!deck.length){deck=CATS.slice();for(let i=deck.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[deck[i],deck[j]]=[deck[j],deck[i]]}}return deck.pop()}
+let used=[];try{used=JSON.parse(localStorage.getItem('krl_used')||'[]')}catch(e){}
+function draw(){
+  used=used.filter(c=>CATS.includes(c));
+  let pool=CATS.filter(c=>!used.includes(c));
+  if(!pool.length){const last=used[used.length-1];used=[];pool=CATS.filter(c=>c!==last)}
+  const c=pool[Math.random()*pool.length|0];used.push(c);
+  try{localStorage.setItem('krl_used',JSON.stringify(used))}catch(e){}
+  return c;
+}
 
 /* ---------- audio, haptics, wake lock ---------- */
 let actx=null;
@@ -375,8 +1142,16 @@ function hurtSound(){
 }
 function correctSound(){
   if(!S.sound)return;
-  try{const a=ctx(),T=a.currentTime;
-    [[1046.5,0],[1318.5,.08],[1568,.16],[2093,.26]].forEach(([f,d])=>[[1,.13],[2.76,.04]].forEach(([m,v],j)=>{const o=a.createOscillator(),g=a.createGain(),st=T+d;o.frequency.value=f*m;g.gain.setValueAtTime(.0001,st);g.gain.exponentialRampToValueAtTime(v,st+.005);g.gain.exponentialRampToValueAtTime(.0001,st+.7/(1+j));o.connect(g);g.connect(a.destination);o.start(st);o.stop(st+.8)}))}catch(e){}
+  try{const a=ctx(),T=a.currentTime,g=a.createGain(),o=a.createOscillator();g.connect(a.destination);
+    g.gain.setValueAtTime(.0001,T);g.gain.exponentialRampToValueAtTime(.15,T+.01);g.gain.exponentialRampToValueAtTime(.0001,T+.3);
+    o.frequency.setValueAtTime(660,T);o.frequency.setValueAtTime(880,T+.08);o.connect(g);o.start(T);o.stop(T+.32)}catch(e){}
+}
+function wrongSound(){
+  if(!S.sound)return;
+  try{const a=ctx(),T=a.currentTime,g=a.createGain(),f=a.createBiquadFilter(),o=a.createOscillator();
+    o.type='triangle';o.frequency.setValueAtTime(196,T);o.frequency.exponentialRampToValueAtTime(110,T+.22);
+    f.type='lowpass';f.frequency.value=900;g.gain.setValueAtTime(.0001,T);g.gain.exponentialRampToValueAtTime(.24,T+.01);g.gain.exponentialRampToValueAtTime(.0001,T+.32);
+    o.connect(f);f.connect(g);g.connect(a.destination);o.start(T);o.stop(T+.35)}catch(e){}
 }
 function slowSound(){
   if(!S.sound)return;
@@ -395,30 +1170,32 @@ function resumeSound(){
   beep(660,.08,'square',.06);
 }
 const wrong=()=>{beep(220,.18,'square',.1);setTimeout(()=>beep(150,.3,'sawtooth',.1),130)};
-function fanfare(){
-  if(!S.sound)return;
-  try{const a=ctx(),T=a.currentTime+.05,out=a.createGain(),comp=a.createDynamicsCompressor();
-    out.gain.value=.9;out.connect(comp);comp.connect(a.destination);
-    const len=a.sampleRate*2.8|0,ir=a.createBuffer(2,len,a.sampleRate);
-    for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3)}
-    const rev=a.createConvolver(),wet=a.createGain();rev.buffer=ir;wet.gain.value=.4;out.connect(rev);rev.connect(wet);wet.connect(comp);
-    const env=(g,st,at,pk,d)=>{g.gain.setValueAtTime(.0001,st);g.gain.exponentialRampToValueAtTime(pk,st+at);g.gain.exponentialRampToValueAtTime(.0001,st+d)};
-    const osc=(type,f,st,at,pk,d,det=0)=>{const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.value=f;o.detune.value=det;env(g,T+st,at,pk,d);o.connect(g);g.connect(out);o.start(T+st);o.stop(T+st+d+.05)};
-    const pluck=(f,st,v=.16)=>{osc('sine',f,st,.005,v,.9);osc('sine',f*2,st,.005,v*.35,.45);osc('triangle',f*3,st,.003,v*.12,.2)};
-    const bell=(f,st,v=.1,d=2.4)=>[[1,1],[2.76,.45],[5.4,.2]].forEach(([m,k],j)=>osc('sine',f*m,st,.004,v*k,d/(1+j)));
-    const pad=(fs,st,d,v)=>fs.forEach(f=>[-6,6].forEach(dt=>{const o=a.createOscillator(),lp=a.createBiquadFilter(),g=a.createGain();
-      o.type='sawtooth';o.frequency.value=f;o.detune.value=dt;lp.type='lowpass';lp.frequency.value=1300;
-      g.gain.setValueAtTime(.0001,T+st);g.gain.exponentialRampToValueAtTime(v,T+st+.12);g.gain.setValueAtTime(v,T+st+d);g.gain.exponentialRampToValueAtTime(.0001,T+st+d+.45);
-      o.connect(lp);lp.connect(g);g.connect(out);o.start(T+st);o.stop(T+st+d+.5)}));
-    const noise=(st,d,type,f0,f1,v,at)=>{const n=a.sampleRate*d|0,b=a.createBuffer(1,n,a.sampleRate),x=b.getChannelData(0);for(let i=0;i<n;i++)x[i]=Math.random()*2-1;
-      const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();s.buffer=b;f.type=type;f.frequency.setValueAtTime(f0,T+st);f.frequency.exponentialRampToValueAtTime(f1,T+st+d*.9);env(g,T+st,at,v,d);s.connect(f);f.connect(g);g.connect(out);s.start(T+st)};
-    pad([130.81,196,329.63,392,523.25],0,.65,.03);pad([174.61,220,349.23,440,523.25],.65,.65,.03);pad([196,246.94,392,493.88,587.33],1.3,.65,.03);pad([130.81,196,329.63,392,523.25,659.25],1.95,2.4,.04);
-    [[65.41,0,.65],[87.31,.65,.65],[98,1.3,.65],[65.41,1.95,2.2]].forEach(([f,st,d])=>osc('sine',f,st,.01,.3,d));
-    [[659.25,0],[783.99,.16],[1046.5,.32],[880,.65],[1046.5,.81],[1396.9,.97],[987.77,1.3],[1174.7,1.46],[1568,1.62]].forEach(([f,st])=>pluck(f,st));
-    noise(1.35,.6,'bandpass',400,8000,.3,.55);noise(1.95,2,'highpass',6000,9000,.2,.01);
-    const k=a.createOscillator(),kg=a.createGain();k.frequency.setValueAtTime(140,T+1.95);k.frequency.exponentialRampToValueAtTime(35,T+2.4);env(kg,T+1.95,.005,.8,.8);k.connect(kg);kg.connect(out);k.start(T+1.95);k.stop(T+2.8);
-    bell(523.25,1.95,.14);bell(1046.5,1.95,.1);bell(1318.5,2.03,.09);bell(1568,2.11,.09);bell(2093,2.19,.08);
-  }catch(e){}
+function WS(){
+  const a=ctx(),T=a.currentTime+.05,out=a.createGain(),comp=a.createDynamicsCompressor();
+  out.gain.value=.9;out.connect(comp);comp.connect(a.destination);
+  const len=a.sampleRate*2.4|0,ir=a.createBuffer(2,len,a.sampleRate);
+  for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3)}
+  const rev=a.createConvolver(),wet=a.createGain();rev.buffer=ir;wet.gain.value=.4;out.connect(rev);rev.connect(wet);wet.connect(comp);
+  const tone=(type,f,st,at,pk,d,det=0,to=0)=>{const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.setValueAtTime(f,T+st);if(to)o.frequency.exponentialRampToValueAtTime(to,T+st+d);o.detune.value=det;
+    g.gain.setValueAtTime(.0001,T+st);g.gain.exponentialRampToValueAtTime(pk,T+st+at);g.gain.exponentialRampToValueAtTime(.0001,T+st+d);o.connect(g);g.connect(out);o.start(T+st);o.stop(T+st+d+.05)};
+  const saw=(f,st,at,pk,d,fc=1300)=>[-7,7].forEach(dt=>{const o=a.createOscillator(),l=a.createBiquadFilter(),g=a.createGain();o.type='sawtooth';o.frequency.value=f;o.detune.value=dt;l.type='lowpass';l.frequency.value=fc;
+    g.gain.setValueAtTime(.0001,T+st);g.gain.exponentialRampToValueAtTime(pk,T+st+at);g.gain.exponentialRampToValueAtTime(.0001,T+st+d);o.connect(l);l.connect(g);g.connect(out);o.start(T+st);o.stop(T+st+d+.05)});
+  const noise=(st,d,type,f0,f1,v,at)=>{const n=a.sampleRate*d|0,b=a.createBuffer(1,n,a.sampleRate),x=b.getChannelData(0);for(let i=0;i<n;i++)x[i]=Math.random()*2-1;
+    const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();s.buffer=b;f.type=type;f.frequency.setValueAtTime(f0,T+st);f.frequency.exponentialRampToValueAtTime(f1,T+st+d*.9);
+    g.gain.setValueAtTime(.0001,T+st);g.gain.exponentialRampToValueAtTime(v,T+st+at);g.gain.exponentialRampToValueAtTime(.0001,T+st+d);s.connect(f);f.connect(g);g.connect(out);s.start(T+st)};
+  return{tone,saw,noise};
+}
+const WINS={
+  f1:{n:'win.mp3 (your file)',url:'win.mp3'},
+  f2:{n:'win2.mp3 (your file)',url:'win2.mp3'},
+  f3:{n:'win3.mp3 (your file)',url:'win3.mp3'},
+  synth:{n:'Built-in (soft chord)',f:w=>{w.noise(0,.7,'bandpass',500,3200,.07,.55);w.tone('sine',55,.6,.01,.4,1.4);w.tone('sine',110,.6,.02,.16,1.6);[261.63,329.63,392,493.88,587.33].forEach((f,i)=>{w.tone('triangle',f,.6,.18,.05,2.4);w.tone('sine',f*2,.6+i*.03,.25,.018,2.2)})}}
+};
+function fanfare(id,force){
+  if(!S.sound&&!force)return;
+  const w=WINS[id||S.winSnd]||WINS.f1,fb=()=>{try{WINS.synth.f(WS())}catch(e){}};
+  if(!w.url){fb();return}
+  const au=new Audio(w.url);au.volume=.95;au.onerror=fb;au.play().catch(fb);
 }
 const buzz=p=>{try{if(S.vibrate&&navigator.vibrate)navigator.vibrate(p)}catch(e){}};
 async function lockWake(){try{if(S.wake&&'wakeLock'in navigator)G.wake=await navigator.wakeLock.request('screen')}catch(e){}}
@@ -427,19 +1204,19 @@ function unlockWake(){try{G.wake&&G.wake.release();G.wake=null}catch(e){}}
 /* ---------- markup ---------- */
 const HL='M12 21C12 21 1 14.5 1 7.5C1 4 3.6 1.5 6.8 1.5C9 1.5 11 2.8 12 4.7Z',HR='M12 21C12 21 23 14.5 23 7.5C23 4 20.4 1.5 17.2 1.5C15 1.5 13 2.8 12 4.7Z';
 const HEART=`<path class="o" d="${HL.slice(0,-1)}C13 2.8 15 1.5 17.2 1.5C20.4 1.5 23 4 23 7.5C23 14.5 12 21 12 21Z"/><path class="hl" d="${HL}"/><path class="hr" d="${HR}"/>`;
-const BODY='M100 6C152 6 190 46 190 100C190 152 148 194 112 222Q106 227 100 228Q94 227 88 222C52 194 10 152 10 100C10 46 48 6 100 6Z',KNOT='M100 222C98 231 91 239 83 244Q100 239 117 244C109 239 102 231 100 222Z';
+const BODY_OLD='M100 6C152 6 190 46 190 100C190 152 148 194 112 222Q106 227 100 228Q94 227 88 222C52 194 10 152 10 100C10 46 48 6 100 6Z',BODY='M100 5C148 5 188 42 188 98C188 146 154 188 118 214C112 218 108 222 107 227L104 230L96 230L93 227C92 222 88 218 82 214C46 188 12 146 12 98C12 42 52 5 100 5Z',KNOT='M95 228C93 234 90 240 85 245C94 248 106 248 115 245C110 240 107 234 105 228Z';
 const PANEL=`<div class="inner"><div class="stage">
-<div class="bw"><svg class="bsvg" viewBox="0 0 200 290" aria-hidden="true"><path class="str" d="M100 243C88 254 112 262 100 272C90 281 108 285 100 290"/><path class="bb" d="${KNOT}"/><path d="${KNOT}" fill="url(#kn)"/><path class="bb" d="${BODY}"/><path d="${BODY}" fill="url(#sph)"/><ellipse cx="100" cy="204" rx="54" ry="28" fill="url(#inl)"/><path d="${BODY}" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="2"/><ellipse cx="150" cy="168" rx="24" ry="34" transform="rotate(-38 150 168)" fill="url(#rim)"/><path class="gl" d="M46 76C46 44 66 22 96 14C74 28 62 48 60 78C59 92 47 94 46 76Z" fill="url(#gloss)"/><ellipse cx="64" cy="104" rx="4" ry="12" transform="rotate(20 64 104)" fill="#fff" opacity=".6"/><path d="M128 20C160 30 180 56 184 88" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="4" stroke-linecap="round"/><path class="tw" d="M150 38l3 9 9 3-9 3-3 9-3-9-9-3 9-3z" fill="#fff"/></svg><div class="time">0</div><div class="fx"></div></div>
-<div class="catwrap"><div class="cat"></div></div><div class="ask"><div class="askq"></div><div class="askc"></div><div class="askbtns"><button class="no" data-j="no">✗ Wrong</button><button class="yes" data-j="yes">✓ Correct</button></div></div><div class="hint"></div></div>
+<div class="bw"><svg class="bsvg" viewBox="0 0 200 290" aria-hidden="true"><path class="str" d="M100 246C84 256 118 262 102 272C88 281 112 286 100 292" stroke-width="3.5"/><path class="bb" d="${KNOT}"/><path d="${KNOT}" fill="url(#kn)"/><path d="M92 238C98 241 102 241 108 238" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"/><path class="bb" d="${BODY}"/><path d="${BODY}" fill="url(#sph)"/><ellipse cx="100" cy="196" rx="56" ry="30" fill="url(#inl)"/><path d="${BODY}" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="2"/><path d="M172 112C174 146 154 180 122 206" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="5" stroke-linecap="round"/><path class="gl" d="M42 82C40 46 62 20 98 12C72 28 62 50 60 84C59 98 43 100 42 82Z" fill="url(#gloss)"/><ellipse cx="60" cy="116" rx="4" ry="12" transform="rotate(18 60 116)" fill="#fff" opacity=".6"/><circle cx="104" cy="22" r="2.6" fill="#fff" opacity=".7"/><path class="tw" d="M152 40l3 9 9 3-9 3-3 9-3-9-9-3 9-3z" fill="#fff"/></svg><div class="time">0</div><div class="fx"></div></div>
+<div class="catwrap"><div class="cat"></div></div><div class="ask"><div class="askq"></div><div class="askc"></div><div class="askbtns"><button class="no" data-j="no">✗ Wrong</button><button class="yes" data-j="yes">✓ Correct</button></div></div><div class="hint"></div><button class="skip" data-skip>Skip category</button></div>
 <div class="hud"><span class="name"></span><span class="pips"></span></div></div>`;
-const LB='M50 8C62 8 70 22 70 41C70 59 61 72 54 79L46 79C39 72 30 59 30 41C30 22 38 8 50 8Z';
-const balloon=(g,c)=>`<g class="g ${g}"><path class="str" d="M50 88C44 98 56 106 50 114C46 119 53 122 50 126"/><path class="${c}" d="${LB}"/><path class="${c}" d="M50 78L44 89Q50 85 56 89Z"/><path d="${LB}" fill="url(#sph)"/><ellipse cx="41" cy="27" rx="5" ry="11" transform="rotate(25 41 27)" fill="url(#spec)"/><path d="M58 16C65 22 68 32 68 40" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="2" stroke-linecap="round"/></g>`;
+const LB='M50 7C63 7 72 20 72 38C72 54 63 67 55 74C53 76 52 78 51.5 80L48.5 80C48 78 47 76 45 74C37 67 28 54 28 38C28 20 37 7 50 7Z';
+const balloon=(g,c)=>`<g class="g ${g}"><path class="str" d="M50 88C44 98 56 106 50 114C46 119 53 122 50 126"/><path class="${c}" d="M50 79L45 87Q50 85 55 87Z"/><path class="${c}" d="${LB}"/><path d="${LB}" fill="url(#sph)"/><path d="${LB}" fill="none" stroke="#000" stroke-opacity=".2" stroke-width=".8"/><path d="M36 30C36 19 42 12 49 9C43 15 41 22 41 31C41 36 36 37 36 30Z" fill="url(#gloss)"/><ellipse cx="38" cy="45" rx="1.6" ry="4.5" transform="rotate(14 38 45)" fill="#fff" opacity=".6"/><path d="M63 24C67 30 68 36 68 42" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="2" stroke-linecap="round"/></g>`;
 function floaters(){return Array.from({length:9},(_,i)=>{const c=i%2?'#2fd4ff':'#ff6a55';return `<svg class="fl" style="--w:${40+Math.random()*50}px;--x:${(Math.random()-.5)*90}px;--d:${12+Math.random()*10}s;--dl:${-Math.random()*20}s;left:${Math.random()*90}%" viewBox="0 0 200 290" aria-hidden="true"><path d="M100 243C90 254 110 262 100 272C92 280 106 284 100 290" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="3"/><path d="${KNOT}" fill="${c}"/><path d="${BODY}" fill="${c}"/><path d="${BODY}" fill="url(#sph)"/><ellipse cx="62" cy="62" rx="15" ry="32" transform="rotate(32 62 62)" fill="url(#spec)"/></svg>`}).join('')}
 const LOGO=`<div class="logo" role="img" aria-label="Krillion IRL"><div class="wm"><span>kri</span><svg class="ll" viewBox="22 2 56 128" aria-hidden="true">${balloon('g1','a')}</svg><svg class="ll" viewBox="22 2 56 128" aria-hidden="true">${balloon('g2','b')}</svg><span>ion</span></div><div class="irl">IRL</div></div>`;
 
 const P=[$('#p1'),$('#p2')];
 P.forEach(p=>p.innerHTML=PANEL);
-const E=P.map(p=>({p,name:p.querySelector('.name'),pips:p.querySelector('.pips'),hud:p.querySelector('.hud'),stage:p.querySelector('.stage'),bw:p.querySelector('.bw'),bsvg:p.querySelector('.bsvg'),time:p.querySelector('.time'),fx:p.querySelector('.fx'),cat:p.querySelector('.cat'),hint:p.querySelector('.hint'),ask:p.querySelector('.ask'),askq:p.querySelector('.askq'),askc:p.querySelector('.askc')}));
+const E=P.map(p=>({p,name:p.querySelector('.name'),pips:p.querySelector('.pips'),hud:p.querySelector('.hud'),stage:p.querySelector('.stage'),bw:p.querySelector('.bw'),bsvg:p.querySelector('.bsvg'),time:p.querySelector('.time'),fx:p.querySelector('.fx'),cat:p.querySelector('.cat'),hint:p.querySelector('.hint'),ask:p.querySelector('.ask'),skip:p.querySelector('.skip'),askq:p.querySelector('.askq'),askc:p.querySelector('.askc')}));
 
 /* ---------- rendering ---------- */
 function layout(){const r=P[0].getBoundingClientRect();document.documentElement.style.setProperty('--bh',Math.max(120,Math.min(r.height-64,r.width*1.3))+'px')}
@@ -468,7 +1245,7 @@ function setActive(){
   const inPlay=['running','reveal','paused','popping','confirm','transition'].includes(G.state),ask=G.state==='confirm'||(G.state==='paused'&&G.resumeTo==='confirm');
   E.forEach((e,i)=>{
     const sp=inPlay&&G.turn===i,jd=inPlay&&G.turn!==i,wasSp=e.p.classList.contains('speaker'),wasJd=e.p.classList.contains('judge');
-    e.p.classList.toggle('speaker',sp);e.p.classList.toggle('judge',jd);e.p.classList.toggle('asking',jd&&ask);
+    e.p.classList.toggle('speaker',sp);e.p.classList.toggle('judge',jd);e.p.classList.toggle('asking',jd&&ask);e.p.classList.toggle('canskip',G.state==='running');skipUI();
     e.p.style.setProperty('--sc',`var(--p${G.turn})`);
     if(jd&&G.state!=='reveal'){
       setCat(e,G.cat);
@@ -516,9 +1293,12 @@ function startGame(){
   };
   step();
 }
+function skipUI(){const v=G.skipV||[0,0];E.forEach((e,i)=>{e.skip.textContent=v[i]?'Skip ✓ waiting…':v[1-i]?'Agree to skip?':'Skip category';e.skip.classList.toggle('on',!!v[i]);e.skip.classList.toggle('ask',!v[i]&&!!v[1-i])})}
+function vote(i){if(G.state!=='running')return;G.skipV[i]=G.skipV[i]?0:1;if(G.skipV[0]&&G.skipV[1])skipNow();else skipUI()}
+function skipNow(){cancelAnimationFrame(G.raf);clearFx();G.state='transition';G.skipV=[0,0];setActive();callout(E[G.turn],'SKIPPED','var(--muted)');beep(330,.08,'triangle',.1);setTimeout(()=>{if(G.state==='transition')newCategory()},700)}
 function endSlow(){document.body.classList.remove('slowmo')}
 function beginTurn(ms){
-  endSlow();G.state='running';G.left=ms;G.nextTick=0;G.rate=1;G.lastF=performance.now();G.deadline=G.lastF+ms;
+  endSlow();G.skipV=[0,0];G.state='running';G.left=ms;G.nextTick=0;G.rate=1;G.lastF=performance.now();G.deadline=G.lastF+ms;
   setActive();cancelAnimationFrame(G.raf);G.raf=requestAnimationFrame(frame);
 }
 function frame(){
@@ -562,7 +1342,7 @@ function callout(e,text,c){
 function judge(ok){
   if(G.state!=='confirm'||performance.now()<G.askReady)return;
   cancelAnimationFrame(G.raf);const sp=G.turn,jd=1-sp;endSlow();
-  if(!ok){resolve(sp,!G.steal);return}
+  if(!ok){wrongSound();resolve(sp,!G.steal);return}
   correctSound();
   if(G.steal){G.state='transition';callout(E[sp],'NICE!','var(--gold)');setActive();setTimeout(()=>{if(G.state==='transition')newCategory()},1000);return}
   G.turn=jd;beginTurn(S.time*1000);
@@ -632,7 +1412,7 @@ function over(w){
 }
 
 /* ---------- input ---------- */
-P.forEach((p,i)=>p.addEventListener('pointerdown',e=>{e.preventDefault();const b=e.target.closest('[data-j]');if(b)judge(b.dataset.j==='yes');else tap(i)}));
+P.forEach((p,i)=>p.addEventListener('pointerdown',e=>{e.preventDefault();const b=e.target.closest('[data-j]');if(b)judge(b.dataset.j==='yes');else if(e.target.closest('[data-skip]'))vote(i);else tap(i)}));
 document.addEventListener('keydown',e=>{if(!sheet.hidden||!ov.hidden)return;if(e.code==='Space'){e.preventDefault();tap(G.turn)}else if(e.code==='KeyY'||e.code==='Enter')judge(true);else if(e.code==='KeyN')judge(false)});
 $('#pause').onclick=pause;
 $('#gear').onclick=()=>{pause();openSettings()};
@@ -651,6 +1431,7 @@ function syncSheet(){
     else if(el.type==='checkbox')el.checked=!!S[k];else el.value=S[k];
   });
   sheet.querySelectorAll('[data-out]').forEach(o=>o.textContent=S[o.dataset.out]);
+  $('#wins').innerHTML=Object.entries(WINS).map(([k,v])=>`<div class="wopt${S.winSnd===k?' on':''}"><button data-w="${k}">${v.n}</button><button data-p="${k}">▶</button></div>`).join('');
 }
 function openSettings(){syncSheet();sheet.hidden=false}
 sheet.addEventListener('input',e=>{
@@ -659,6 +1440,8 @@ sheet.addEventListener('input',e=>{
   save();applySettings();syncSheet();setHints();
 });
 sheet.addEventListener('click',e=>{
+  const w=e.target.closest('[data-w],[data-p]');
+  if(w){const k=w.dataset.w||w.dataset.p;if(w.dataset.w){S.winSnd=k;save();syncSheet()}fanfare(k,true);return}
   const b=e.target.closest('.seg button');if(!b)return;
   const k=b.parentElement.dataset.key,v=b.dataset.v;
   S[k]=v==='true'?true:v==='false'?false:v;
@@ -667,6 +1450,13 @@ sheet.addEventListener('click',e=>{
 $('#done').onclick=()=>{sheet.hidden=true};
 $('#reset').onclick=()=>{S={...DEF};save();applySettings();syncSheet()};
 
+function uiClick(){beep(520,.05,'sine',.08);setTimeout(()=>beep(780,.05,'sine',.06),35);buzz(8)}
+document.addEventListener('pointerdown',e=>{
+  const b=e.target.closest('.overlay button,.sheet button:not([data-w]):not([data-p]),.skip');if(!b)return;
+  uiClick();
+  const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height)*2,i=document.createElement('i');i.className='rip';
+  i.style.cssText=`left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px;width:${d}px;height:${d}px`;b.appendChild(i);setTimeout(()=>i.remove(),600);
+});
 showIdle();
 </script>
 </body>
